@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 import express from "express";
 import knex from "knex";
 import dotenv from "dotenv";
@@ -77,4 +78,23 @@ app.delete("/users/:id", async (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+=======
+import express from 'express';
+import { initializeDatabase } from './db/init-db';
+
+const PORT = 3000;
+
+async function main() {
+    await initializeDatabase();
+
+    const app = express();
+    
+    app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+    });
+}
+
+main().catch(err => {
+    console.error('Error in main function:', err);
+>>>>>>> Stashed changes
 });
