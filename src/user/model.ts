@@ -12,8 +12,7 @@ export interface CreateUserDto {
     email: string;
     username: string;
     password: string;
-    roleId: number | string;
-    firstName?: string;
-    lastName?: string;
+    role_id: number | string;
+    date_of_birth: string;
 }
   
