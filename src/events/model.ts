@@ -4,11 +4,10 @@ export interface Event {
     id: number;
     eventName: string;
     startTime: Date;
-    endTime: string;
+    endTime: Date;
     eventOwner: User;
     eventAdmins: User[];
     invitees: User[];
-    
     createdAt: Date;
     updatedAt: Date;
   }
