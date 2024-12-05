@@ -1,126 +1,173 @@
-import { Knex } from 'knex';
-import { userService } from '../service';
+import { executeQuery } from "../../db/db";
+import { CreateUserDto, User } from "../model";
+import { createUserService, getAllUsersService, getUserByIdService, updateUserService, deleteUserService } from "./userService";
 
-// Mock implementation that's type-safe
-const createMockKnex = (): jest.Mocked<Knex> => {
-  const mockQuery = {
-    select: jest.fn(),
-    where: jest.fn(),
-    first: jest.fn(),
-    insert: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-    returning: jest.fn()
-  };
+jest.mock("../db/db");
 
-  const mockDb = jest.fn(() => mockQuery) as unknown as jest.Mocked<Knex>;
-  
-  Object.assign(mockDb, mockQuery);
-
-  return mockDb;
-};
-
-describe('UserService', () => {
-  // Create a type-safe mock Knex instance
-  const mockDb = createMockKnex();
-
-  // Create service with mock db
-  const service = userService(mockDb);
-
-  // Sample user for testing
-  const mockUser = {
-    id: 1,
-    userName: 'testuser',
-    email: 'test@example.com',
-    dateOfBirth: new Date('1990-01-01'),
-    profilePic: 'http://example.com/pic.jpg',
-    passwordHash: 'hashedpassword123'
-  };
-
+describe("User Service", () => {
   beforeEach(() => {
-    // Reset all mocks before each test
-    Object.values(mockDb).forEach(mock => {
-      if (typeof mock.mockReset === 'function') {
-        mock.mockReset();
-      }
-    });
+    jest.resetAllMocks();
   });
 
-  describe('getAllUsers', () => {
-    it('should retrieve all users', async () => {
-      (mockDb as any).select.mockImplementation(() => Promise.resolve([mockUser]));
-
-      const users = await service.getAllUsers();
-
-      expect(mockDb).toHaveBeenCalledWith('users');
-      expect(mockDb.select).toHaveBeenCalledWith('*');
-      expect(users).toEqual([mockUser]);
-    });
-  });
-
-  describe('getUserById', () => {
-    it('should retrieve a user by id', async () => {
-      (mockDb as any).where.mockImplementation(() => ({
-        first: jest.fn().mockResolvedValue(mockUser)
-      }));
-
-      const user = await service.getUserById(1);
-
-      expect(mockDb).toHaveBeenCalledWith('users');
-      expect(mockDb.where).toHaveBeenCalledWith({ id: 1 });
-      expect(user).toEqual(mockUser);
-    });
-  });
-
-  describe('createUser', () => {
-    it('should create a new user', async () => {
-      const newUserData = {
-        userName: 'newuser',
-        email: 'new@example.com'
+  describe("createUserService", () => {
+    it("should create a new user", async () => {
+      const createUserDto: CreateUserDto = {
+        username: "testUser",
+        first_name: "Test",
+        last_name: "User",
+        email: "test@example.com",
+        date_of_birth: "1990-01-01",
+        profile_pic: undefined,
+        password_hash: "hashedPassword"
       };
 
-      (mockDb as any).insert.mockImplementation(() => ({
-        returning: jest.fn().mockResolvedValue([mockUser])
-      }));
-
-      const user = await service.createUser(newUserData);
-
-      expect(mockDb).toHaveBeenCalledWith('users');
-      expect(mockDb.insert).toHaveBeenCalledWith(newUserData);
-      expect(user).toEqual(mockUser);
-    });
-  });
-
-  describe('updateUser', () => {
-    it('should update an existing user', async () => {
-      const updateData = {
-        userName: 'updateduser'
+      const expectedUser: User = {
+        id: 1,
+        username: "testUser",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        dateOfBirth: "1990-01-01",
+        profilePic: undefined,
+        passwordHash: "hashedPassword",
+        createdAt: new Date(),
+        updatedAt: null
       };
 
-      (mockDb as any).where.mockImplementation(() => ({
-        update: jest.fn().mockImplementation(() => ({
-          returning: jest.fn().mockResolvedValue([mockUser])
-        }))
-      }));
+      (executeQuery as jest.Mock).mockResolvedValue([expectedUser]);
 
-      const user = await service.updateUser(1, updateData);
+      const result = await createUserService(createUserDto);
+      
+      expect(executeQuery).toHaveBeenCalledWith(
+        expect.stringContaining("INSERT INTO users"),
+        [
+          createUserDto.username,
+          createUserDto.first_name,
+          createUserDto.last_name,
+          createUserDto.email,
+          createUserDto.date_of_birth,
+          createUserDto.profile_pic,
+          createUserDto.password_hash
+        ]
+      );
 
-      expect(mockDb).toHaveBeenCalledWith('users');
-      expect(mockDb.where).toHaveBeenCalledWith({ id: 1 });
-      expect(user).toEqual(mockUser);
+      expect(result).toEqual(expectedUser);
     });
   });
 
-  describe('deleteUser', () => {
-    it('should delete a user', async () => {
-      (mockDb as any).where.mockImplementation(() => ({
-        delete: jest.fn().mockResolvedValue(1)
-      }));
+  describe("getAllUsersService", () => {
+    it("should return all users", async () => {
+      const expectedUsers: User[] = [
+        { id: 1, username: "user1", firstName: "", lastName: "", email: "", dateOfBirth: "", profilePic: "", passwordHash: "", createdAt: new Date(), updatedAt: null },
+        { id: 2, username: "user2", firstName: "", lastName: "", email: "", dateOfBirth: "", profilePic: "", passwordHash: "", createdAt: new Date(), updatedAt: null }
+      ];
 
-      await service.deleteUser(1);
+      (executeQuery as jest.Mock).mockResolvedValue(expectedUsers);
 
-      expect(mockDb).toHaveBeenCalledWith('users');
-      expect(mockDb.where).toHaveBeenCalledWith({ id: 1 });
+      const result = await getAllUsersService();
+      
+      expect(executeQuery).toHaveBeenCalledWith(
+        expect.stringContaining("SELECT FROM users"),
+        []
+      );
+
+      expect(result).toEqual(expectedUsers);
+    });
+  });
+
+  describe("getUserByIdService", () => {
+    it("should return a user by ID", async () => {
+      const userId = 1;
+      const expectedUser: User = { id: userId, username: "testUser", firstName: "", lastName: "", email: "", dateOfBirth: "", profilePic: "", passwordHash: "", createdAt: new Date(), updatedAt: null };
+
+      (executeQuery as jest.Mock).mockResolvedValue([expectedUser]);
+
+      const result = await getUserByIdService(userId);
+      
+      expect(executeQuery).toHaveBeenCalledWith(
+        expect.stringContaining("SELECT FROM users WHERE id = $1"),
+        [userId]
+      );
+
+      expect(result).toEqual(expectedUser);
+    });
+
+    it("should return null if user not found", async () => {
+      const userId = 999;
+      (executeQuery as jest.Mock).mockResolvedValue([]);
+
+      const result = await getUserByIdService(userId);
+      
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("updateUserService", () => {
+    it("should update an existing user", async () => {
+      const userId = 1;
+      const updateData: Partial<User> = {
+        firstName: "Updated",
+        lastName: "Name"
+      };
+
+      const expectedUser: User = { id: userId, username: "", firstName: "Updated", lastName: "Name", email: "", dateOfBirth: "", profilePic: "", passwordHash: "", createdAt: new Date(), updatedAt: new Date() };
+
+      (executeQuery as jest.Mock).mockResolvedValue([expectedUser]);
+
+      const result = await updateUserService({ ...updateData, id: userId });
+      
+      expect(executeQuery).toHaveBeenCalledWith(
+        expect.stringContaining("UPDATE users SET"),
+        [
+          updateData.firstName,
+          updateData.lastName,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          userId
+        ]
+      );
+
+      expect(result).toEqual(expectedUser);
+    });
+
+    it("should return null if user not found", async () => {
+      const userId = 999;
+      const updateData: Partial<User> = { firstName: "Updated" };
+
+      (executeQuery as jest.Mock).mockResolvedValue([]);
+
+      const result = await updateUserService({ ...updateData, id: userId });
+      
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("deleteUserService", () => {
+    it("should delete a user", async () => {
+      const userId = 1;
+
+      (executeQuery as jest.Mock).mockResolvedValue([{ id: userId }]);
+
+      const result = await deleteUserService(userId);
+      
+      expect(executeQuery).toHaveBeenCalledWith(
+        expect.stringContaining("DELETE FROM users WHERE id = $1"),
+        [userId]
+      );
+
+      expect(result).toBe(true);
+    });
+
+    it("should return false if user not found", async () => {
+      const userId = 999;
+
+      (executeQuery as jest.Mock).mockResolvedValue([]);
+
+      const result = await deleteUserService(userId);
+      
+      expect(result).toBe(false);
     });
   });
 });
