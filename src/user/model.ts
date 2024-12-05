@@ -4,8 +4,8 @@ export interface User {
   firstName: string;
   lastName: string;
   email: string;
-  dateOfBirth: string; // yyyy-mm-dd
-  profilePic?: string;
+  dateOfBirth: string; 
+  profilePic?: string | null;
   passwordHash: string;
   createdAt: Date;
   updatedAt: Date | null;
@@ -17,6 +17,6 @@ export interface CreateUserDto {
   last_name: string;
   email: string;
   date_of_birth: string;
-  profile_pic?: string;
+  profile_pic?: string | null;
   password_hash: string;
 }
