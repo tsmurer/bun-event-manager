@@ -1,62 +1,115 @@
-import { executeQuery, pool } from "../db/db"
+import { executeQuery } from "../db/db"
 import { CreateUserDto, User } from "./model";
 
-
-export const getAllUsersService = async (): Promise<User[]> => {
-    const users = await executeQuery<User>(
-        'SELECT * FROM users ORDER BY id ASC',
-        []
-    );
-    return users;
+export const createUserService = async (createUserData: CreateUserDto): Promise<User> => {
+  const [user] = await executeQuery<User>(
+    `INSERT INTO users (username, first_name, last_name, email, date_of_birth, profile_pic, password_hash, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NULL)
+     RETURNING 
+     id, 
+     username, 
+     first_name AS "firstName", 
+     last_name AS "lastName", 
+     email, 
+     date_of_birth AS "dateOfBirth", 
+     profile_pic AS "profilePic", 
+     password_hash AS "passwordHash", 
+     created_at AS "createdAt", 
+     updated_at AS "updatedAt"`,
+    [
+      createUserData.username,
+      createUserData.first_name,
+      createUserData.last_name,
+      createUserData.email,
+      createUserData.date_of_birth,
+      createUserData.profile_pic || null,
+      createUserData.password_hash
+    ]
+  );
+  return user;
 };
 
-export const createUserService = async (createUserData: CreateUserDto): Promise<User> => {
-    const { email, username, password, date_of_birth } = createUserData;
-
-    const [user] = await executeQuery<User>(
-        `INSERT INTO users (username, email, date_of_birth, password_hash)
-         VALUES ($1, $2, $3, $4)
-         RETURNING *`,
-        [username, email, date_of_birth, password]
-    );
-    return user;
+export const getAllUsersService = async (): Promise<User[]> => {
+  const users = await executeQuery<User>(
+    `SELECT 
+      id, 
+      username, 
+      first_name AS "firstName", 
+      last_name AS "lastName", 
+      email, 
+      date_of_birth AS "dateOfBirth", 
+      profile_pic AS "profilePic", 
+      password_hash AS "passwordHash", 
+      created_at AS "createdAt", 
+      updated_at AS "updatedAt"
+    FROM users 
+    ORDER BY id ASC`,
+    []
+  );
+  return users;
 };
 
 export const getUserByIdService = async (id: number): Promise<User | null> => {
-    const [user] = await executeQuery<User>(
-        'SELECT * FROM users WHERE id = $1',
-        [id]
-    );
-    return user || null;
+  const [user] = await executeQuery<User>(
+    `SELECT 
+      id, 
+      username, 
+      first_name AS "firstName", 
+      last_name AS "lastName", 
+      email, 
+      date_of_birth AS "dateOfBirth", 
+      profile_pic AS "profilePic", 
+      password_hash AS "passwordHash", 
+      created_at AS "createdAt", 
+      updated_at AS "updatedAt"
+    FROM users 
+    WHERE id = $1`,
+    [id]
+  );
+  return user || null;
 };
 
-export const updateUserService = async (id: number, updateUserData: Partial<CreateUserDto>): Promise<User | null> => {
-    const { email, username, password, role_id, date_of_birth } = updateUserData;
-
-    const [user] = await executeQuery<User>(
-        `UPDATE users
-         SET 
-            email = COALESCE($1, email),
-            username = COALESCE($2, username),
-            password = COALESCE($3, password),
-            role_id = COALESCE($4, role_id),
-            date_of_birth = COALESCE($5, date_of_birth),
-            updated_at = NOW()
-         WHERE id = $6
-         RETURNING *`,
-        [email, username, password, role_id, date_of_birth, id]
-    );
-
-    return user || null;
+export const updateUserService = async (updateUserData: Partial<User>): Promise<User | null> => {
+  const { id, firstName, lastName, email, dateOfBirth, profilePic, passwordHash } = updateUserData;
+  const [user] = await executeQuery<User>(
+    `UPDATE users
+     SET
+     first_name = COALESCE($1, first_name),
+     last_name = COALESCE($2, last_name),
+     email = COALESCE($3, email),
+     date_of_birth = COALESCE($4, date_of_birth),
+     profile_pic = COALESCE($5, profile_pic),
+     password_hash = COALESCE($6, password_hash),
+     updated_at = NOW()
+     WHERE id = $7
+     RETURNING 
+     id, 
+     username, 
+     first_name AS "firstName", 
+     last_name AS "lastName", 
+     email, 
+     date_of_birth AS "dateOfBirth", 
+     profile_pic AS "profilePic", 
+     password_hash AS "passwordHash", 
+     created_at AS "createdAt", 
+     updated_at AS "updatedAt"`,
+    [
+      firstName,
+      lastName,
+      email,
+      dateOfBirth,
+      profilePic,
+      passwordHash,
+      id
+    ]
+  );
+  return user;
 };
-
 
 export const deleteUserService = async (id: number): Promise<boolean> => {
-    const result = await executeQuery<{ count: string }>(
-        'DELETE FROM users WHERE id = $1 RETURNING COUNT(*)',
-        [id]
-    );
-
-    return result.length > 0;
+  const result = await executeQuery<User>(
+    'DELETE FROM users WHERE id = $1',
+    [id]
+  );
+  return Array.isArray(result) && result.length > 0;
 };
-

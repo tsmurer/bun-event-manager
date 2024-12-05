@@ -4,11 +4,13 @@ const createUsersTable = async () => {
     const query = `
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
-            username VARCHAR(255) NOT NULL,
+            username VARCHAR(33) NOT NULL,
             email VARCHAR(255) UNIQUE NOT NULL,
             date_of_birth DATE NOT NULL,
             profile_pic VARCHAR(255),
             password_hash VARCHAR(255) NOT NULL,
+            first_name VARCHAR(33),
+            last_name VARCHAR(33),
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         );
