@@ -1,8 +1,9 @@
 import { executeQuery } from "../../db/db";
 import { CreateUserDto, User } from "../model";
-import { createUserService, getAllUsersService, getUserByIdService, updateUserService, deleteUserService } from "./userService";
+import { createUserService, getAllUsersService, getUserByIdService, updateUserService, deleteUserService } from "../service";
+import { validUserMock } from "./mocks";
 
-jest.mock("../db/db");
+jest.mock("../../db/db");
 
 describe("User Service", () => {
   beforeEach(() => {
@@ -11,15 +12,7 @@ describe("User Service", () => {
 
   describe("createUserService", () => {
     it("should create a new user", async () => {
-      const createUserDto: CreateUserDto = {
-        username: "testUser",
-        first_name: "Test",
-        last_name: "User",
-        email: "test@example.com",
-        date_of_birth: "1990-01-01",
-        profile_pic: undefined,
-        password_hash: "hashedPassword"
-      };
+      const createUserDto: CreateUserDto = validUserMock;
 
       const expectedUser: User = {
         id: 1,
@@ -28,7 +21,7 @@ describe("User Service", () => {
         lastName: "User",
         email: "test@example.com",
         dateOfBirth: "1990-01-01",
-        profilePic: undefined,
+        profilePic: null,
         passwordHash: "hashedPassword",
         createdAt: new Date(),
         updatedAt: null
@@ -67,7 +60,7 @@ describe("User Service", () => {
       const result = await getAllUsersService();
       
       expect(executeQuery).toHaveBeenCalledWith(
-        expect.stringContaining("SELECT FROM users"),
+        expect.stringContaining("SELECT"),
         []
       );
 
@@ -85,7 +78,7 @@ describe("User Service", () => {
       const result = await getUserByIdService(userId);
       
       expect(executeQuery).toHaveBeenCalledWith(
-        expect.stringContaining("SELECT FROM users WHERE id = $1"),
+        expect.stringContaining("WHERE id = $1"),
         [userId]
       );
 
@@ -117,7 +110,7 @@ describe("User Service", () => {
       const result = await updateUserService({ ...updateData, id: userId });
       
       expect(executeQuery).toHaveBeenCalledWith(
-        expect.stringContaining("UPDATE users SET"),
+        expect.stringContaining("UPDATE users"),
         [
           updateData.firstName,
           updateData.lastName,

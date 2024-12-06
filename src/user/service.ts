@@ -103,7 +103,7 @@ export const updateUserService = async (updateUserData: Partial<User>): Promise<
       id
     ]
   );
-  return user;
+  return user || null;
 };
 
 export const deleteUserService = async (id: number): Promise<boolean> => {
