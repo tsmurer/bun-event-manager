@@ -1,6 +1,7 @@
 import { executeQuery } from "../../db/db";
 import { CreateUserDto, User } from "../model";
 import { createUserService, getAllUsersService, getUserByIdService, updateUserService, deleteUserService } from "../service";
+import { validUserMock } from "./mocks";
 
 jest.mock("../../db/db");
 
@@ -11,15 +12,7 @@ describe("User Service", () => {
 
   describe("createUserService", () => {
     it("should create a new user", async () => {
-      const createUserDto: CreateUserDto = {
-        username: "testUser",
-        first_name: "Test",
-        last_name: "User",
-        email: "test@example.com",
-        date_of_birth: "1990-01-01",
-        profile_pic: null,
-        password_hash: "hashedPassword"
-      };
+      const createUserDto: CreateUserDto = validUserMock;
 
       const expectedUser: User = {
         id: 1,
